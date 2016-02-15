@@ -59,16 +59,17 @@ int translate_num(long int* output, const char* str, long int lower_bound,
     if (( *str == '0') & ( *(str + 1) == 'x')) {
       *output = strtol(str, NULL, 16);
     } else {
-      const char* pointer = str;
-      while (pointer) {
-        if (!isdigit(*pointer)) {
+      int i = 0;
+      while (str[i]) {
+        if (!isdigit(str[i])) {
           write_to_log("%i is not a valid number. \n", str);
           return -1;
         }
+        i++;
+
       }
       *output = strtol(str, NULL, 0);
     }
-    
 
     if ((*output > upper_bound) | (*output < lower_bound)) {
       output = NULL;

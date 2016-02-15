@@ -91,10 +91,8 @@ void test_translate_num() {
 
 void test_table_1() {
     int retval;
-
     SymbolTable* tbl = create_table(SYMTBL_UNIQUE_NAME);
     CU_ASSERT_PTR_NOT_NULL(tbl);
-
     retval = add_to_table(tbl, "abc", 8);
     CU_ASSERT_EQUAL(retval, 0);
     retval = add_to_table(tbl, "efg", 12);

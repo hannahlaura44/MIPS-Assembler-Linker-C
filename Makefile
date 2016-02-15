@@ -11,7 +11,7 @@ assembler: clean
 	$(CC) $(CFLAGS) -o assembler assembler.c $(ASSEMBLER_FILES)
 
 test-assembler: clean
-	$(CC) $(CFLAGS) -DTESTING -o test-assembler test_assembler.c $(ASSEMBLER_FILES) $(CUNIT)
+	$(CC) $(CFLAGS) -DTESTING -g -o test-assembler test_assembler.c $(ASSEMBLER_FILES) $(CUNIT)
 	./test-assembler
 
 clean:
