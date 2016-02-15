@@ -4,6 +4,7 @@
 #include <ctype.h>
 
 #include "translate_utils.h"
+#include "utils.h"
 
 void write_inst_string(FILE* output, const char* name, char** args, int num_args) {
     fprintf(output, "%s", name);
@@ -55,8 +56,19 @@ int is_valid_label(const char* str) {
  */
 int translate_num(long int* output, const char* str, long int lower_bound, 
     long int upper_bound) {
-
-    *output = strtol(str, NULL, 0);
+    if (( *str == '0') & ( *(str + 1) == 'x')) {
+      *output = strtol(str, NULL, 16);
+    } else {
+      const char* pointer = str;
+      while (pointer) {
+        if (!isdigit(*pointer)) {
+          write_to_log("%i is not a valid number. \n", str);
+          return -1;
+        }
+      }
+      *output = strtol(str, NULL, 0);
+    }
+    
 
     if ((*output > upper_bound) | (*output < lower_bound)) {
       output = NULL;
