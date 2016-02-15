@@ -61,6 +61,16 @@ SymbolTable* create_table(int mode) {
 /* Frees the given SymbolTable and all associated memory. */
 void free_table(SymbolTable* table) {
     /* YOUR CODE HERE */
+  Symbol *curr = table->tbl;
+  //loop through each symbol in the array
+  while (curr) {
+    free(curr->name);
+    curr += sizeof(Symbol);
+  }
+  //free the array of symbols
+  free(table->tbl);
+  //free the symbol table object
+  free(table);
 }
 
 /* A suggested helper function for copying the contents of a string. */
@@ -90,7 +100,48 @@ static char* create_copy_of_str(const char* str) {
  */
 int add_to_table(SymbolTable* table, const char* name, uint32_t addr) {
     /* YOUR CODE HERE */
-    return -1;
+
+    //unique entries
+    if (table->mode == 1) {
+      //if the name already exists
+      if (get_addr_for_symbol(table, name) != -1) {
+        name_already_exists(name);
+        return -1;
+      }
+    }
+
+    //addr is not word-alligned. (a multiple of 4 b/c machine architecture we use is byte-addressed. The addresses are one byte away from each other. increments in bytes.)
+    if (addr % 4 != 0) {
+      addr_alignment_incorrect();
+      return -1;
+    }    
+
+    if (table->len == table->cap) {
+      //resize table
+      table->cap = table->cap * SCALING_FACTOR;
+      table->tbl = (Symbol *) realloc(table->tbl, table->cap * sizeof(Symbol));
+
+      if (!table->tbl) {
+        allocation_failed();
+        return -1;
+      }
+    }
+
+    (table->len)++;
+
+    //store the symbol name and address in the table
+    Symbol* symbol;
+    symbol = (table->tbl) + addr;
+    //since name may point to a temporary array, must create a copy of it.
+    char* name_copy = (char *) malloc(sizeof *name);
+    if (!name_copy) {
+      allocation_failed();
+      return -1;
+    }
+    *name_copy = *create_copy_of_str(name);
+    symbol->name = name_copy;
+    symbol->addr = addr; //do you need to malloc space to hold addr?
+    return 0;
 }
 
 /* Returns the address (byte offset) of the given symbol. If a symbol with name
