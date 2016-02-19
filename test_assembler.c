@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <ctype.h>
+#include <string.h>
 
 #include <CUnit/Basic.h>
 
@@ -69,7 +71,6 @@ void test_translate_reg() {
 
 void test_translate_num() {
     long int output;
-
     CU_ASSERT_EQUAL(translate_num(&output, "35", -1000, 1000), 0);
     CU_ASSERT_EQUAL(output, 35);
     CU_ASSERT_EQUAL(translate_num(&output, "145634236", 0, 9000000000), 0);
@@ -88,13 +89,13 @@ void test_translate_num() {
 /****************************************
  *  Test cases for tables.c 
  ****************************************/
-
 void test_table_1() {
     int retval;
     SymbolTable* tbl = create_table(SYMTBL_UNIQUE_NAME);
     CU_ASSERT_PTR_NOT_NULL(tbl);
     retval = add_to_table(tbl, "abc", 8);
     CU_ASSERT_EQUAL(retval, 0);
+    Symbol *sym = (tbl->tbl);
     retval = add_to_table(tbl, "efg", 12);
     CU_ASSERT_EQUAL(retval, 0);
     retval = add_to_table(tbl, "q45", 16);
@@ -103,7 +104,6 @@ void test_table_1() {
     CU_ASSERT_EQUAL(retval, -1); 
     retval = add_to_table(tbl, "bob", 14); 
     CU_ASSERT_EQUAL(retval, -1); 
-
     retval = get_addr_for_symbol(tbl, "abc");
     CU_ASSERT_EQUAL(retval, 8); 
     retval = get_addr_for_symbol(tbl, "q45");
@@ -112,7 +112,6 @@ void test_table_1() {
     CU_ASSERT_EQUAL(retval, -1);
     
     free_table(tbl);
-
     char* arr[] = { "Error: name 'q45' already exists in table.",
                     "Error: address is not a multiple of 4." };
     check_lines_equal(arr, 2);
@@ -152,11 +151,39 @@ void test_table_2() {
 }
 
 /****************************************
+ *  Test cases for translate.c 
+ ****************************************/
+void test_write_rtype() {
+    FILE *file = NULL;
+    file = fopen("./test.txt", "w+");
+    const char* name = "addu";
+    fprintf(file, "hi");
+
+    char* args[2];
+    args[0] = "$t0";
+    args[1] = "$t1";
+    args[2] = "$t2";
+
+    size_t num_args = 3;
+    uint32_t addr = 4;
+    SymbolTable* symtbl = NULL;
+    SymbolTable* reltbl = NULL;
+
+    //fprintf(stderr,"args is : %s \n", args);
+    
+    translate_inst(file, name, args, num_args, addr, symtbl, reltbl);
+    uint32_t instr = 7;
+    write_inst_hex(file, instr);
+    fprintf(stderr, "leaving test \n");
+    CU_ASSERT_EQUAL(0, 0);
+}
+
+/****************************************
  *  Add your test cases here
  ****************************************/
 
 int main(int argc, char** argv) {
-    CU_pSuite pSuite1 = NULL, pSuite2 = NULL;
+    CU_pSuite pSuite1 = NULL, pSuite2 = NULL, pSuite3 = NULL;
 
     if (CUE_SUCCESS != CU_initialize_registry()) {
         return CU_get_error();
@@ -186,8 +213,21 @@ int main(int argc, char** argv) {
         goto exit;
     }
 
+    /* Suite 3 */
+    pSuite3 = CU_add_suite("Testing translate.c", init_log_file, NULL);
+    if (!pSuite3) {
+        goto exit;
+    }
+    if (!CU_add_test(pSuite3, "test_write_rtype", test_write_rtype)) {
+        goto exit;
+    }
+
     CU_basic_set_mode(CU_BRM_VERBOSE);
+    fprintf(stderr, "hi");
+
     CU_basic_run_tests();
+    fprintf(stderr, "hi");
+
 
 exit:
     CU_cleanup_registry();

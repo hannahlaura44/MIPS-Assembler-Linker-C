@@ -58,6 +58,7 @@ int translate_num(long int* output, const char* str, long int lower_bound,
     long int upper_bound) {
     if (( *str == '0') & ( *(str + 1) == 'x')) {
       *output = strtol(str, NULL, 16);
+      //TO DO: check for invalid characters (anything other than a, b, c, d, e, f)
     } else {
       int i = 0;
       while (str[i]) {
@@ -66,7 +67,6 @@ int translate_num(long int* output, const char* str, long int lower_bound,
           return -1;
         }
         i++;
-
       }
       *output = strtol(str, NULL, 0);
     }

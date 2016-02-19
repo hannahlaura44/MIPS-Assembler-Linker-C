@@ -90,6 +90,23 @@ int translate_inst(FILE* output, const char* name, char** args, size_t num_args,
     else if (strcmp(name, "sltu") == 0)  return write_rtype (0x2b, output, args, num_args);
     else if (strcmp(name, "sll") == 0)   return write_shift (0x00, output, args, num_args);
     /* YOUR CODE HERE */
+    else if (strcmp(name, "addiu") == 0)    return write_addiu (0x09, output, args, num_args);
+    else if (strcmp(name, "ori") == 0)    return write_ori (0x0d, output, args, num_args);
+    else if (strcmp(name, "lui") == 0)    return write_lui (0x0f, output, args, num_args);
+    else if (strcmp(name, "lb") == 0)    return write_mem(0x20, output, args, num_args);
+    else if (strcmp(name, "lbu") == 0)    return write_mem(0x24, output, args, num_args);
+    else if (strcmp(name, "lw") == 0)    return write_mem(0x23, output, args, num_args);
+    else if (strcmp(name, "sb") == 0)    return write_mem(0x28, output, args, num_args);
+    else if (strcmp(name, "sw") == 0)    return write_mem(0x2b, output, args, num_args);
+    // else if (strcmp(name, "beq") == 0)    return write_branch (0x04, output, args, num_args);
+    // else if (strcmp(name, "bne") == 0)    return write_branch (0x05, output, args, num_args);
+    // else if (strcmp(name, "j") == 0)    return write_jump (0x02, output, args, num_args);
+    // else if (strcmp(name, "jal") == 0)    return write_jump (0x03, output, args, num_args);
+    // else if (strcmp(name, "mult") == 0)    return write_ ( , output, args, num_args);
+    // else if (strcmp(name, "div") == 0)    return write_ ( , output, args, num_args);
+    // else if (strcmp(name, "mfhi") == 0)    return write_ ( , output, args, num_args);
+    // else if (strcmp(name, "mflo") == 0)    return write_ ( , output, args, num_args);
+
     else                                 return -1;
 }
 
@@ -103,11 +120,35 @@ int translate_inst(FILE* output, const char* name, char** args, size_t num_args,
 int write_rtype(uint8_t funct, FILE* output, char** args, size_t num_args) {
     // Perhaps perform some error checking?
 
-    int rd = translate_reg(args[0]);
-    int rs = translate_reg(args[1]);
-    int rt = translate_reg(args[2]);
+    int op = 0;
+    int rs = 0;
+    int rt = 0;
+    int rd = 0;
+    int shamt = 0;
+
+    if ((funct == 0x2a) | (funct == 0x2b)) { //slt, sltu
+      //does anything special need to be done for slt, sltu
+      //is it the same as addu & or?
+      rd = translate_reg(args[0]);
+      rs = translate_reg(args[1]);
+      rt = translate_reg(args[2]);
+    } else { //addu, or
+      rd = translate_reg(args[0]);
+      rs = translate_reg(args[1]);
+      rt = translate_reg(args[2]);
+    }
+
+    // need to create 32-bit instruction. use shifts and masking.
 
     uint32_t instruction = 0;
+
+    instruction = instruction | funct;
+    instruction = instruction | (shamt<<6);
+    instruction = instruction | (rd<<11);
+    instruction = instruction | (rt<<16);
+    instruction = instruction | (rs<<21);
+    instruction = instruction | (op<<26);
+
     write_inst_hex(output, instruction);
     return 0;
 }
@@ -127,7 +168,20 @@ int write_shift(uint8_t funct, FILE* output, char** args, size_t num_args) {
     int rt = translate_reg(args[1]);
     int err = translate_num(&shamt, args[2], 0, 31);
 
+    if (err == -1) {
+      //what do we do here? print to 
+      write_to_log("%li is not a a valid shift amount. \n", shamt);
+      return -1;
+    }
+
     uint32_t instruction = 0;
+    instruction = instruction | funct;
+    instruction = instruction | (shamt<<6);
+    instruction = instruction | (rd<<11);
+    instruction = instruction | (rt<<16);
+    instruction = instruction | (rs<<21);
+    instruction = instruction | (op<<26);
+
     write_inst_hex(output, instruction);
     return 0;
 }
@@ -148,12 +202,23 @@ int write_addiu(uint8_t opcode, FILE* output, char** args, size_t num_args) {
     // Perhaps perform some error checking?
     
     long int imm;
+    uint32_t op = opcode;
     int rt = translate_reg(args[0]);
     int rs = translate_reg(args[1]);
     int err = translate_num(&imm, args[2], INT16_MIN, INT16_MAX);
 
+    if (err == -1) {
+      //what do we do here? print to 
+      write_to_log("%li is not a valid amount to add. \n", imm);
+      return -1;
+    }
 
     uint32_t instruction = 0;
+    instruction = instruction | imm;
+    instruction = instruction | (rt<<16);
+    instruction = instruction | (rs<<21);
+    instruction = instruction | (op<<26);
+
     write_inst_hex(output, instruction);
     return 0;
 }
@@ -162,11 +227,23 @@ int write_ori(uint8_t opcode, FILE* output, char** args, size_t num_args) {
     // Perhaps perform some error checking?
     
     long int imm;
+    uint32_t op = opcode;
     int rt = translate_reg(args[0]);
     int rs = translate_reg(args[1]);
     int err = translate_num(&imm, args[2], 0, UINT16_MAX);
 
+    if (err == -1) {
+      //what do we do here? print to 
+      write_to_log("%li is not a valid number. \n", imm);
+      return -1;
+    }
+
     uint32_t instruction = 0;
+    instruction = instruction | imm;
+    instruction = instruction | (rt<<16);
+    instruction = instruction | (rs<<21);
+    instruction = instruction | (op<<26);
+
     write_inst_hex(output, instruction);
     return 0;
 }
@@ -175,23 +252,46 @@ int write_lui(uint8_t opcode, FILE* output, char** args, size_t num_args) {
     // Perhaps perform some error checking?
     
     long int imm;
+    int rs = 0; //do we just set rs to zero?
     int rt = translate_reg(args[0]);
     int err = translate_num(&imm, args[1], 0, UINT16_MAX);
 
+    if (err == -1) {
+      write_to_log("%li is not a valid number. \n", imm);
+      return -1;
+    }
+
+
     uint32_t instruction = 0;
+
+    instruction = instruction | imm;
+    instruction = instruction | (rt<<16);
+    instruction = instruction | (rs<<21);
+    instruction = instruction | (op<<26);
+
     write_inst_hex(output, instruction);
     return 0;
 }
 
+//use for lb, lbu, lw, sb, sw
 int write_mem(uint8_t opcode, FILE* output, char** args, size_t num_args) {
     // Perhaps perform some error checking?
     
-    long int imm;
+    long int imm; //the immediate here is the offset.
     int rt = translate_reg(args[0]);
     int rs = translate_reg(args[2]);
     int err = translate_num(&imm, args[1], INT16_MIN, INT16_MAX);
 
+    if (err == -1) {
+      write_to_log("%li is not a valid number. \n", imm);
+      return -1;
+    }
+
     uint32_t instruction =0;
+    instruction = instruction | imm;
+    instruction = instruction | (rt<<16);
+    instruction = instruction | (rs<<21);
+    instruction = instruction | (op<<26);
     write_inst_hex(output, instruction);
     return 0;
 }

@@ -63,9 +63,11 @@ void free_table(SymbolTable* table) {
     /* YOUR CODE HERE */
   Symbol *curr = table->tbl;
   //loop through each symbol in the array
-  while (curr) {
+  int counter = 0;
+  while (counter <= table->len) {
     free(curr->name);
-    curr += sizeof(Symbol);
+    curr = curr + sizeof(Symbol);
+    counter++;
   }
   //free the array of symbols
   free(table->tbl);
@@ -111,7 +113,7 @@ int add_to_table(SymbolTable* table, const char* name, uint32_t addr) {
     }
 
     //addr is not word-alligned. (a multiple of 4 b/c machine architecture we use is byte-addressed. The addresses are one byte away from each other. increments in bytes.)
-    if (addr % 4 != 0) {
+    if ((addr % 4) != 0) {
       addr_alignment_incorrect();
       return -1;
     }    
@@ -127,20 +129,26 @@ int add_to_table(SymbolTable* table, const char* name, uint32_t addr) {
       }
     }
 
-    (table->len)++;
+    // OLD since name may point to a temporary array, must create a copy of it.
+    // char* name_copy = (char *) malloc(sizeof(char) * strlen(name));
+    // fprintf(stderr, "size of malloc is: %i \n", (sizeof(char) * strlen(name)));
+    char* name_copy;
+    name_copy = create_copy_of_str(name); //this function mallocs data itself
 
-    //store the symbol name and address in the table
-    Symbol* symbol;
-    symbol = (table->tbl) + addr;
-    //since name may point to a temporary array, must create a copy of it.
-    char* name_copy = (char *) malloc(sizeof *name);
     if (!name_copy) {
       allocation_failed();
       return -1;
     }
-    *name_copy = *create_copy_of_str(name);
+    
+    //store the symbol name and address in the table
+    Symbol* symbol;
+    //(table->tbl)[table->len] = &symbol;
+
+    symbol = &(table->tbl)[table->len];
+    
     symbol->name = name_copy;
     symbol->addr = addr; //do you need to malloc space to hold addr?
+    (table->len)++;
     return 0;
 }
 
