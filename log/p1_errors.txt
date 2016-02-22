@@ -3,3 +3,4 @@ Error - invalid label at line 7: 3hello
 Error - extra argument at line 9: sll
 Error: name 'label' already exists in table.
 Error - extra argument at line 13: 5
+One or more errors encountered during assembly operation.

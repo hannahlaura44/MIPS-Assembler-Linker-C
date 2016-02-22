@@ -64,7 +64,7 @@ void free_table(SymbolTable* table) {
   Symbol *curr = table->tbl;
   //loop through each symbol in the array
   int counter = 0;
-  while (counter <= table->len) {
+  while (counter < table->len) {
     free(curr->name);
     curr = curr + sizeof(Symbol);
     counter++;
