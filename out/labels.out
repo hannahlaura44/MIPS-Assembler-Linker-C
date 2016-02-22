@@ -1,10 +1,10 @@
 .text
-3fffffff
-3ffffffe
+1109ffff
+1509fffe
 08000000
-3ffffffe
+1509fffe
 0c000000
-3ffffffa
+1109fffa
 
 .symbol
 0	label1

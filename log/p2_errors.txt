@@ -1,6 +1,1 @@
-0 is not a valid amount to add. 
-invalid number of arguments. 
-Invalid register. 
-This label does not exist. 
-2155905152 is not a valid amount to add. 
 One or more errors encountered during assembly operation.

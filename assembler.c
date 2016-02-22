@@ -139,7 +139,7 @@ static int parse_args(uint32_t input_line, char** args, int* num_args) {
 int pass_one(FILE* input, FILE* output, SymbolTable* symtbl) {
     /* YOUR CODE HERE */
     if (!input) {
-        write_to_log("input file is not valid.");
+        printf("input file is not valid.");
         return -1;
     }
 
@@ -167,7 +167,7 @@ int pass_one(FILE* input, FILE* output, SymbolTable* symtbl) {
         int num = add_if_label(input_line, token, byte_offset, symtbl);
         if (num == -1) {
             ret_code = -1;
-            write_to_log("error adding label to symbol table.");
+            printf("error adding label to symbol table.");
             name = strtok(NULL, IGNORE_CHARS);
         } else if (num == 1) {
             name = strtok(NULL, IGNORE_CHARS);
@@ -184,6 +184,7 @@ int pass_one(FILE* input, FILE* output, SymbolTable* symtbl) {
         int num_args = 0;
         if (parse_args(input_line, args, &num_args) == -1) {
             ret_code = -1;
+            continue;
         }
     	// Checks to see if there were any errors when writing instructions
         unsigned int lines_written = write_pass_one(output, name, args, num_args);
@@ -313,20 +314,26 @@ int assemble(const char* in_name, const char* tmp_name, const char* out_name) {
 
         fprintf(dst, ".text\n");
         if (pass_two(src, dst, symtbl, reltbl) != 0) {
+            fprintf(stderr, "I just finished pass two \n");
             err = 1;
         }
-        
+        fprintf(stderr, "hi \n");
         fprintf(dst, "\n.symbol\n");
+        fprintf(stderr, "hi1 \n");
         write_table(symtbl, dst);
-
+        fprintf(stderr, "hi2 \n");
         fprintf(dst, "\n.relocation\n");
         write_table(reltbl, dst);
+        fprintf(stderr, "hi3 \n");
 
         close_files(src, dst);
+        fprintf(stderr, "hi4 \n");
     }
-    
+    fprintf(stderr, "hi5 \n");
     free_table(symtbl);
+    fprintf(stderr, "hi6 \n");
     free_table(reltbl);
+    fprintf(stderr, "hi7 \n");
     return err;
 }
 
@@ -375,7 +382,7 @@ int main(int argc, char **argv) {
     }
 
     int err = assemble(input, inter, output);
-
+    fprintf(stderr, "done assembling \n");
     if (err) {
         write_to_log("One or more errors encountered during assembly operation.\n");
     } else {

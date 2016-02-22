@@ -47,23 +47,23 @@ unsigned write_pass_one(FILE* output, const char* name, char** args, int num_arg
         /* YOUR CODE HERE */
       long int imm;
       if (translate_num(&imm, args[1], INT32_MIN, UINT32_MAX) == -1) {
-        write_to_log("%i Number is more than 32 bits. \n", args[1]);
+        fprintf(stderr, "%s Number is more than 32 bits. \n", args[1]);
         return 0;
       }
       int err = translate_num(&imm, args[1], INT16_MIN, INT16_MAX);
       if (err == 0) {
         printf("optimization \n");
-        fprintf(output, "addiu %s $0 %s \n", args[0], args[1]);
+        fprintf(output, "addiu %s $0 %s\n", args[0], args[1]);
         return 1;
       } else {
         //lui
         int upper = imm >> 16;
-        fprintf(output, "lui $at %d \n", upper);
+        fprintf(output, "lui $at %d\n", upper);
 
         // ori
         int lower;
         lower = imm & 0xffff;
-        fprintf(output, "ori %s $at %d \n", args[0], lower);
+        fprintf(output, "ori %s $at %d\n", args[0], lower);
         return 2;
       }
     } else if (strcmp(name, "mul") == 0) {
@@ -148,7 +148,7 @@ int write_rtype(uint8_t funct, FILE* output, char** args, size_t num_args) {
     int shamt = 0;
 
     if (num_args > 3) {
-      write_to_log("invalid number of arguments. \n");
+      printf("invalid number of arguments. \n");
       return -1;
     }
     if (num_args == 1) { //mfhi, mflo
@@ -163,7 +163,7 @@ int write_rtype(uint8_t funct, FILE* output, char** args, size_t num_args) {
     }
     
     if ((rd == -1) | (rs == -1) | (rt == -1)) {
-      write_to_log("Invalid register. \n");
+      printf("Invalid register. \n");
       return -1;
     }
 
@@ -193,7 +193,7 @@ int write_shift(uint8_t funct, FILE* output, char** args, size_t num_args) {
 	// Perhaps perform some error checking?
 
     if (num_args != 3) {
-      write_to_log("invalid number of arguments. \n");
+      printf("invalid number of arguments. \n");
       return -1;
     }
 
@@ -205,12 +205,12 @@ int write_shift(uint8_t funct, FILE* output, char** args, size_t num_args) {
     int err = translate_num(&shamt, args[2], 0, 31);
 
     if ((rd == -1) | (rt == -1)) {
-      write_to_log("Invalid register. \n");
+      printf("Invalid register. \n");
       return -1;
     }
     if (err == -1) {
       //what do we do here? print to 
-      write_to_log("%li is not a a valid shift amount. \n", shamt);
+      printf("%li is not a a valid shift amount. \n", shamt);
       return -1;
     }
 
@@ -232,7 +232,7 @@ int write_addiu(uint8_t opcode, FILE* output, char** args, size_t num_args) {
     // Perhaps perform some error checking?
     
     if (num_args != 3) {
-      write_to_log("invalid number of arguments. \n");
+      printf("invalid number of arguments. \n");
       return -1;
     }
 
@@ -243,12 +243,12 @@ int write_addiu(uint8_t opcode, FILE* output, char** args, size_t num_args) {
     int err = translate_num(&imm, args[2], INT16_MIN, INT16_MAX);
 
     if ((rs == -1) | (rt == -1)) {
-      write_to_log("Invalid register. \n");
+      printf("Invalid register. \n");
       return -1;
     }
     if (err == -1) {
       //what do we do here? print to 
-      write_to_log("%li is not a valid amount to add. \n", imm);
+      printf("%li is not a valid amount to add. \n", imm);
       return -1;
     }
 
@@ -267,7 +267,7 @@ int write_ori(uint8_t opcode, FILE* output, char** args, size_t num_args) {
     // Perhaps perform some error checking?
     
     if (num_args != 3) {
-      write_to_log("invalid number of arguments. \n");
+      printf("invalid number of arguments. \n");
       return -1;
     }
 
@@ -278,12 +278,12 @@ int write_ori(uint8_t opcode, FILE* output, char** args, size_t num_args) {
     int err = translate_num(&imm, args[2], 0, UINT16_MAX);
 
     if ((rs == -1) | (rt == -1)) {
-      write_to_log("Invalid register. \n");
+      printf("Invalid register. \n");
       return -1;
     }
     if (err == -1) {
       //what do we do here? print to 
-      write_to_log("%li is not a valid number. \n", imm);
+      printf("%li is not a valid number. \n", imm);
       return -1;
     }
 
@@ -301,7 +301,7 @@ int write_lui(uint8_t opcode, FILE* output, char** args, size_t num_args) {
     // Perhaps perform some error checking?
     
     if (num_args != 2) {
-      write_to_log("invalid number of arguments. \n");
+      printf("invalid number of arguments. \n");
       return -1;
     }
 
@@ -311,11 +311,11 @@ int write_lui(uint8_t opcode, FILE* output, char** args, size_t num_args) {
     int err = translate_num(&imm, args[1], 0, UINT16_MAX);
 
     if ((rs == -1) | (rt == -1)) {
-      write_to_log("Invalid register. \n");
+      printf("Invalid register. \n");
       return -1;
     }
     if (err == -1) {
-      write_to_log("%li is not a valid number. \n", imm);
+      printf("%li is not a valid number. \n", imm);
       return -1;
     }
 
@@ -336,7 +336,7 @@ int write_mem(uint8_t opcode, FILE* output, char** args, size_t num_args) {
     // Perhaps perform some error checking?
     
     if (num_args != 3) {
-      write_to_log("invalid number of arguments. \n");
+      printf("invalid number of arguments. \n");
       return -1;
     }
 
@@ -346,16 +346,16 @@ int write_mem(uint8_t opcode, FILE* output, char** args, size_t num_args) {
     int err = translate_num(&imm, args[1], INT16_MIN, INT16_MAX);
 
     if ((rs == -1) | (rt == -1)) {
-      write_to_log("Invalid register. \n");
+      printf("Invalid register. \n");
       return -1;
     }
     if (err == -1) {
-      write_to_log("%li is not a valid number. \n", imm);
+      printf("%li is not a valid number. \n", imm);
       return -1;
     }
 
     uint32_t instruction =0;
-    instruction = instruction | imm;
+    instruction = instruction | (imm & 0x0000ffff);
     instruction = instruction | (rt<<16);
     instruction = instruction | (rs<<21);
     instruction = instruction | (opcode<<26);
@@ -376,7 +376,7 @@ int write_branch(uint8_t opcode, FILE* output, char** args, size_t num_args, uin
     // Perhaps perform some error checking?
     
     if (num_args != 3) {
-      write_to_log("invalid number of arguments. \n");
+      printf("invalid number of arguments. \n");
       return -1;
     }
 
@@ -385,24 +385,24 @@ int write_branch(uint8_t opcode, FILE* output, char** args, size_t num_args, uin
     int label_addr = get_addr_for_symbol(symtbl, args[2]);
 
     if ((rs == -1) | (rt == -1)) {
-      write_to_log("Invalid register. \n");
+      printf("Invalid register. \n");
       return -1;
     }
 
     if (label_addr == -1) {
-      write_to_log("This label does not exist. \n");
+      printf("This label does not exist. \n");
       return -1;
     }
 
     //Please compute the branch offset using the MIPS rules.
     int32_t offset = (label_addr - (addr + 4))/4; //addr is the PC
     if (!can_branch_to(addr, label_addr)) {
-      write_to_log("cannot branch to given destination address.");
+      printf("cannot branch to given destination address.");
       return -1;
     }
 
     uint32_t instruction = 0;
-    instruction = instruction | offset;
+    instruction = instruction | (offset & 0x0000ffff);
     instruction = instruction | (rt<<16);
     instruction = instruction | (rs<<21);
     instruction = instruction | (opcode<<26);
@@ -414,14 +414,14 @@ int write_jump(uint8_t opcode, FILE* output, char** args, size_t num_args, uint3
     /* YOUR CODE HERE */
     
     if (num_args != 1) {
-      write_to_log("invalid number of arguments. \n");
+      printf("invalid number of arguments. \n");
       return -1;
     }
 
     char* imm = args[0]; //label to jump to
 
     if (!is_valid_label(imm)) {
-      write_to_log("The label name is invalid.");
+      printf("The label name is invalid.");
       return -1;
     }
 
@@ -437,13 +437,13 @@ int write_jump(uint8_t opcode, FILE* output, char** args, size_t num_args, uint3
 int write_jr(uint8_t funct, FILE* output, char** args, size_t num_args) {
     // Perhaps perform some error checking?
     if (num_args != 1) {
-      write_to_log("invalid number of arguments. \n");
+      printf("invalid number of arguments. \n");
       return -1;
     }
 
     int rs = translate_reg(args[0]);
     if (rs == -1) {
-      write_to_log("Invalid register. \n");
+      printf("Invalid register. \n");
       return -1;
     }
 
