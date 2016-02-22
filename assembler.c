@@ -245,6 +245,7 @@ int pass_two(FILE *input, FILE* output, SymbolTable* symtbl, SymbolTable* reltbl
 
         if (translate_inst(output, name, args, num_args, byte_offset, symtbl, reltbl) == -1) {
             ret_code = -1;
+            raise_inst_error(input_line, name, args, num_args);
         } else {
             byte_offset+=4; //should we write the instruction if there is an error?
         }
@@ -318,6 +319,7 @@ int assemble(const char* in_name, const char* tmp_name, const char* out_name) {
             err = 1;
         }
         fprintf(stderr, "hi \n");
+        fprintf(stderr, "err: %i \n", err);
         fprintf(dst, "\n.symbol\n");
         fprintf(stderr, "hi1 \n");
         write_table(symtbl, dst);
