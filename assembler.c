@@ -138,12 +138,17 @@ static int parse_args(uint32_t input_line, char** args, int* num_args) {
  */
 int pass_one(FILE* input, FILE* output, SymbolTable* symtbl) {
     /* YOUR CODE HERE */
+    if (!input) {
+        write_to_log("input file is not valid.");
+        return -1;
+    }
+
     char buf[BUF_SIZE];
     uint32_t input_line = 0, byte_offset = 0;
     int ret_code = 0;
 
 
-     // Read lines and add to instructions
+    // Read lines and add to instructions
     while(fgets(buf, BUF_SIZE, input)) {
         input_line++;
 
@@ -151,21 +156,44 @@ int pass_one(FILE* input, FILE* output, SymbolTable* symtbl) {
         skip_comment(buf);
 
         // Scan for the instruction name
+        char* name = NULL;
     	char* token = strtok(buf, IGNORE_CHARS);
+
+        if (token == NULL) {
+            continue;
+        }
+
+        // ..check to see if token is a label
+        int num = add_if_label(input_line, token, byte_offset, symtbl);
+        if (num == -1) {
+            ret_code = -1;
+            write_to_log("error adding label to symbol table.");
+            name = strtok(NULL, IGNORE_CHARS);
+        } else if (num == 1) {
+            name = strtok(NULL, IGNORE_CHARS);
+        } else if (num == 0) {
+            name = token;
+        }
+
+        if (name == NULL) {
+            continue;
+        }
 
         // Scan for arguments
         char* args[MAX_ARGS];
         int num_args = 0;
-
+        if (parse_args(input_line, args, &num_args) == -1) {
+            ret_code = -1;
+        }
     	// Checks to see if there were any errors when writing instructions
-        unsigned int lines_written = write_pass_one(output, token, args, num_args);
+        unsigned int lines_written = write_pass_one(output, name, args, num_args);
         if (lines_written == 0) {
-            raise_inst_error(input_line, token, args, num_args);
+            raise_inst_error(input_line, name, args, num_args);
             ret_code = -1;
         } 
         byte_offset += lines_written * 4;
     }       
-    return -1;
+    return ret_code;
 }
 
 /* Reads an intermediate file and translates it into machine code. You may assume:
@@ -181,7 +209,7 @@ int pass_two(FILE *input, FILE* output, SymbolTable* symtbl, SymbolTable* reltbl
     /* YOUR CODE HERE */
 
     /* Since we pass this buffer to strtok(), the characters in this buffer will
-       GET CLOBBERED. */
+       GET CLOBBERED. clobber means to overwrite the contents. */
     char buf[BUF_SIZE];
     /* Store input line number / byte offset. When should each be incremented? */
     uint32_t input_line = 0; 
@@ -196,23 +224,34 @@ int pass_two(FILE *input, FILE* output, SymbolTable* symtbl, SymbolTable* reltbl
         char* name = strtok(buf, IGNORE_CHARS);
 
         // Error checking?
+        if (!name) { //check if an empty
+            continue;
+        }
 
         /* Parse for instruction arguments. You should use strtok() to tokenize
            the rest of the line. Extra arguments should be filtered out in pass_one(),
            so you don't need to worry about that here. */
         char* args[MAX_ARGS];
         int num_args = 0;
+        if (parse_args(input_line, args, &num_args) == -1) {
+            ret_code = -1;
+        }
 
 
         /* Use translate_inst() to translate the instruction and write to output file.
            If an error occurs, the instruction will not be written and you should call
            raise_inst_error(). */
 
-        int num = 0;
+        if (translate_inst(output, name, args, num_args, byte_offset, symtbl, reltbl) == -1) {
+            ret_code = -1;
+        } else {
+            byte_offset+=4; //should we write the instruction if there is an error?
+        }
+        //int num = 0;
     }
     /* Repeat until no more characters are left */
 
-    return -1;
+    return ret_code;
 }
 
 /*******************************

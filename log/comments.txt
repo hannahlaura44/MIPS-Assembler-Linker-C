@@ -1,0 +1,2 @@
+0 is not a valid number. 
+One or more errors encountered during assembly operation.

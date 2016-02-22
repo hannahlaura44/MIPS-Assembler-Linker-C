@@ -1,0 +1,3 @@
+0 is not a valid amount to add. 
+0 is not a valid number. 
+0 is not a valid number. 

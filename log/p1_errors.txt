@@ -1,0 +1,9 @@
+Error - extra argument at line 3: $t0
+Error - invalid label at line 7: 3hello
+error adding label to symbol table.Error - extra argument at line 9: sll
+Error: name 'label' already exists in table.
+error adding label to symbol table.Error - extra argument at line 13: 5
+0 is not a valid number. 
+Invalid register. 
+4294967295 is not a valid number. 
+This label does not exist. 

@@ -45,7 +45,27 @@ const int TWO_POW_SEVENTEEN = 131072;    // 2^17
 unsigned write_pass_one(FILE* output, const char* name, char** args, int num_args) {
     if (strcmp(name, "li") == 0) {
         /* YOUR CODE HERE */
-        return 0;  
+      long int imm;
+      if (translate_num(&imm, args[1], INT32_MIN, UINT32_MAX) == -1) {
+        write_to_log("%i Number is more than 32 bits. \n", args[1]);
+        return 0;
+      }
+      int err = translate_num(&imm, args[1], INT16_MIN, INT16_MAX);
+      if (err == 0) {
+        printf("optimization \n");
+        fprintf(output, "addiu %s $0 %s \n", args[0], args[1]);
+        return 1;
+      } else {
+        //lui
+        int upper = imm >> 16;
+        fprintf(output, "lui $at %d \n", upper);
+
+        // ori
+        int lower;
+        lower = imm & 0xffff;
+        fprintf(output, "ori %s $at %d \n", args[0], lower);
+        return 2;
+      }
     } else if (strcmp(name, "mul") == 0) {
         /* YOUR CODE HERE */
         return 0;  
@@ -90,6 +110,7 @@ int translate_inst(FILE* output, const char* name, char** args, size_t num_args,
     else if (strcmp(name, "sltu") == 0)  return write_rtype (0x2b, output, args, num_args);
     else if (strcmp(name, "sll") == 0)   return write_shift (0x00, output, args, num_args);
     /* YOUR CODE HERE */
+    else if (strcmp(name, "jr") == 0)    return write_jr (0x08, output, args, num_args);
     else if (strcmp(name, "addiu") == 0)    return write_addiu (0x09, output, args, num_args);
     else if (strcmp(name, "ori") == 0)    return write_ori (0x0d, output, args, num_args);
     else if (strcmp(name, "lui") == 0)    return write_lui (0x0f, output, args, num_args);
@@ -232,6 +253,7 @@ int write_addiu(uint8_t opcode, FILE* output, char** args, size_t num_args) {
     }
 
     uint32_t instruction = 0;
+    imm = imm & 0x0000ffff;
     instruction = instruction | imm;
     instruction = instruction | (rt<<16);
     instruction = instruction | (rs<<21);
@@ -396,17 +418,17 @@ int write_jump(uint8_t opcode, FILE* output, char** args, size_t num_args, uint3
       return -1;
     }
 
-    const char* name; //whats the name?
-    add_to_table(reltbl, name, addr); //add the current address to the relocation table
+    char* imm = args[0]; //label to jump to
 
-    int imm = NULL;
-    // imm = args[0]; //address to jump to
-    //how to check if the label is valid?
-    //int label_addr = get_addr_for_symbol(symtbl, args[0]); //but symbtl is not passed in?
+    if (!is_valid_label(imm)) {
+      write_to_log("The label name is invalid.");
+      return -1;
+    }
 
+    add_to_table(reltbl, imm, addr);
 
     uint32_t instruction = 0;
-    instruction = instruction | imm;
+    // instruction = instruction | imm; //apparentally the linker will reference the reltbl and so we can use set the address to 0.
     instruction = instruction | (opcode<<26);
     write_inst_hex(output, instruction);
     return 0;
@@ -414,10 +436,20 @@ int write_jump(uint8_t opcode, FILE* output, char** args, size_t num_args, uint3
 
 int write_jr(uint8_t funct, FILE* output, char** args, size_t num_args) {
     // Perhaps perform some error checking?
+    if (num_args != 1) {
+      write_to_log("invalid number of arguments. \n");
+      return -1;
+    }
 
     int rs = translate_reg(args[0]);
+    if (rs == -1) {
+      write_to_log("Invalid register. \n");
+      return -1;
+    }
 
     uint32_t instruction = 0;
+    instruction = instruction | funct;
+    instruction = instruction | (rs<<21);
     write_inst_hex(output, instruction);
     return 0;
 }

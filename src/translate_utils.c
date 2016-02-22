@@ -7,6 +7,7 @@
 #include "utils.h"
 
 void write_inst_string(FILE* output, const char* name, char** args, int num_args) {
+    printf("write_inst_string \n");
     fprintf(output, "%s", name);
     for (int i = 0; i < num_args; i++) {
         fprintf(output, " %s", args[i]);
@@ -56,30 +57,47 @@ int is_valid_label(const char* str) {
  */
 int translate_num(long int* output, const char* str, long int lower_bound, 
     long int upper_bound) {
-    if (( *str == '0') & ( *(str + 1) == 'x')) {
-      *output = strtol(str, NULL, 16);
-      //TO DO: check for invalid characters (anything other than a, b, c, d, e, f)
-    } else {
-      int i = 0;
-      while (str[i]) {
-        if (!isdigit(str[i])) {
-          write_to_log("%i is not a valid number. \n", str);
-          return -1;
-        }
-        i++;
-      }
-      *output = strtol(str, NULL, 0);
-    }
-
-    if ((*output > upper_bound) | (*output < lower_bound)) {
-      output = NULL;
-    }
-
+    char* end;
     if (!str || !output) {
         return -1;
     }
+
+    *output = strtol(str, &end, 0);
+
+    if ((*output == 0) || (*output > upper_bound) || (*output < lower_bound) || *end) {
+      return -1;
+    }
+
+    
     /* YOUR CODE HERE */
     return 0;
+
+
+    // OLD CODE
+    // if (( *str == '0') & ( *(str + 1) == 'x')) {
+    //   *output = strtol(str, NULL, 16);
+    //   //TO DO: check for invalid characters (anything other than a, b, c, d, e, f)
+    // } else {
+    //   int i = 0;
+    //   while (str[i]) {
+    //     if (!isdigit(str[i])) {
+    //       //write_to_log("%i is not a valid number. \n", str);
+    //       return -1;
+    //     }
+    //     i++;
+    //   }
+    //   *output = strtol(str, NULL, 0);
+    // }
+
+    // if ((*output > upper_bound) | (*output < lower_bound)) {
+    //   output = NULL;
+    // }
+
+    // if (!str || !output) {
+    //     return -1;
+    // }
+    // /* YOUR CODE HERE */
+    // return 0;
 }
 
 /* Translates the register name to the corresponding register number. Please
