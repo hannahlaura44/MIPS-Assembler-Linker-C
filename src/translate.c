@@ -98,14 +98,14 @@ int translate_inst(FILE* output, const char* name, char** args, size_t num_args,
     else if (strcmp(name, "lw") == 0)    return write_mem(0x23, output, args, num_args);
     else if (strcmp(name, "sb") == 0)    return write_mem(0x28, output, args, num_args);
     else if (strcmp(name, "sw") == 0)    return write_mem(0x2b, output, args, num_args);
-    else if (strcmp(name, "beq") == 0)    return write_branch (0x04, output, args, num_args);
-    else if (strcmp(name, "bne") == 0)    return write_branch (0x05, output, args, num_args);
-    else if (strcmp(name, "j") == 0)    return write_jump(0x02, output, args, num_args);
-    else if (strcmp(name, "jal") == 0)    return write_jump(0x03, output, args, num_args);
-    else if (strcmp(name, "mult") == 0)    return write_rtype( , output, args, num_args);
-    else if (strcmp(name, "div") == 0)    return write_rtype( , output, args, num_args);
-    else if (strcmp(name, "mfhi") == 0)    return write_rtype( , output, args, num_args);
-    else if (strcmp(name, "mflo") == 0)    return write_rtype( , output, args, num_args);
+    else if (strcmp(name, "beq") == 0)    return write_branch (0x04, output, args, num_args, addr, symtbl);
+    else if (strcmp(name, "bne") == 0)    return write_branch (0x05, output, args, num_args, addr, symtbl);
+    else if (strcmp(name, "j") == 0)    return write_jump(0x02, output, args, num_args, addr, reltbl);
+    else if (strcmp(name, "jal") == 0)    return write_jump(0x03, output, args, num_args, addr, reltbl);
+    else if (strcmp(name, "mult") == 0)    return write_rtype(0x18, output, args, num_args);
+    else if (strcmp(name, "div") == 0)    return write_rtype(0x1a, output, args, num_args);
+    else if (strcmp(name, "mfhi") == 0)    return write_rtype(0x10, output, args, num_args);
+    else if (strcmp(name, "mflo") == 0)    return write_rtype(0x12, output, args, num_args);
 
     else                                 return -1;
 }
@@ -177,6 +177,8 @@ int write_shift(uint8_t funct, FILE* output, char** args, size_t num_args) {
     }
 
     long int shamt;
+    int rs = 0;
+    int op = 0;
     int rd = translate_reg(args[0]);
     int rt = translate_reg(args[1]);
     int err = translate_num(&shamt, args[2], 0, 31);
@@ -301,7 +303,7 @@ int write_lui(uint8_t opcode, FILE* output, char** args, size_t num_args) {
     instruction = instruction | imm;
     instruction = instruction | (rt<<16);
     instruction = instruction | (rs<<21);
-    instruction = instruction | (op<<26);
+    instruction = instruction | (opcode<<26);
 
     write_inst_hex(output, instruction);
     return 0;
@@ -334,7 +336,7 @@ int write_mem(uint8_t opcode, FILE* output, char** args, size_t num_args) {
     instruction = instruction | imm;
     instruction = instruction | (rt<<16);
     instruction = instruction | (rs<<21);
-    instruction = instruction | (op<<26);
+    instruction = instruction | (opcode<<26);
     write_inst_hex(output, instruction);
     return 0;
 }
@@ -365,10 +367,15 @@ int write_branch(uint8_t opcode, FILE* output, char** args, size_t num_args, uin
       return -1;
     }
 
+    if (label_addr == -1) {
+      write_to_log("This label does not exist. \n");
+      return -1;
+    }
+
     //Please compute the branch offset using the MIPS rules.
-    int32_t offset = label_addr - (addr + 4); //addr is the PC
+    int32_t offset = (label_addr - (addr + 4))/4; //addr is the PC
     if (!can_branch_to(addr, label_addr)) {
-      write_to_log("cannot branch to given destination address.")
+      write_to_log("cannot branch to given destination address.");
       return -1;
     }
 
@@ -376,7 +383,7 @@ int write_branch(uint8_t opcode, FILE* output, char** args, size_t num_args, uin
     instruction = instruction | offset;
     instruction = instruction | (rt<<16);
     instruction = instruction | (rs<<21);
-    instruction = instruction | (op<<26);
+    instruction = instruction | (opcode<<26);
     write_inst_hex(output, instruction);        
     return 0;
 }
@@ -392,22 +399,21 @@ int write_jump(uint8_t opcode, FILE* output, char** args, size_t num_args, uint3
     const char* name; //whats the name?
     add_to_table(reltbl, name, addr); //add the current address to the relocation table
 
-    int imm = args[0]; //address to jump to
+    int imm = NULL;
+    // imm = args[0]; //address to jump to
     //how to check if the label is valid?
     //int label_addr = get_addr_for_symbol(symtbl, args[0]); //but symbtl is not passed in?
 
 
     uint32_t instruction = 0;
     instruction = instruction | imm;
-    instruction = instruction | (op<<26);
+    instruction = instruction | (opcode<<26);
     write_inst_hex(output, instruction);
     return 0;
 }
 
 int write_jr(uint8_t funct, FILE* output, char** args, size_t num_args) {
     // Perhaps perform some error checking?
-
-    
 
     int rs = translate_reg(args[0]);
 
