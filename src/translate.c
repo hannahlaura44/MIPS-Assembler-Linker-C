@@ -68,13 +68,28 @@ unsigned write_pass_one(FILE* output, const char* name, char** args, int num_arg
       }
     } else if (strcmp(name, "mul") == 0) {
         /* YOUR CODE HERE */
-        return 0;  
+        int rd = args[0];
+        int rs = args[1];
+        int rt = args[2];
+        fprintf(output, "mult %s %s\n", rs, rt);
+        fprintf(output, "mflo %s\n", rd);
+        return 2;  
     } else if (strcmp(name, "quo") == 0) {
         /* YOUR CODE HERE */
-        return 0;  
+        int rd = args[0];
+        int rs = args[1];
+        int rt = args[2];
+        fprintf(output, "div %s %s\n", rs, rt);
+        fprintf(output, "mflo %s\n", rd);
+        return 2;
     } else if (strcmp(name, "rem") == 0) {
         /* YOUR CODE HERE */
-        return 0;  
+        int rd = args[0];
+        int rs = args[1];
+        int rt = args[2];
+        fprintf(output, "rem %s %s\n", rs, rt);
+        fprintf(output, "mfhi %s\n", rd);
+        return 2;
     }
     write_inst_string(output, name, args, num_args);
     return 1;
