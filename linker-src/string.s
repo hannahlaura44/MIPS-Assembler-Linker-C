@@ -28,6 +28,15 @@ tab:	.asciiz "\t"
 #------------------------------------------------------------------------------
 strlen:
 	# YOUR CODE HERE
+	li $v0, 0 #initialize the counter
+	beq $a0, $0, end #if an empty string is passed in.
+strlen_loop:
+	lb $t0, 0($a0) #load the current character
+	beq $t0, $0, end #if null terminator (is this a valic check for null terminator?)
+	addiu $v0, $v0, 1 #increment the counter.
+	addiu $a0, $a0, 1 #move to the next character
+	j strlen_loop
+end:
 	jr $ra
 
 #------------------------------------------------------------------------------
@@ -42,6 +51,17 @@ strlen:
 #------------------------------------------------------------------------------
 strncpy:
 	# YOUR CODE HERE
+	beq $a1, $0, end #if an empty string is passed in.
+	addu $v0, $a0, 0 #load the address of the destination array into the return value.
+strncpy_loop:
+	lb $t0, 0($a1) #load the current character from the source string.
+	sb $t0 0($a0) #store the current character into the destination array
+	beq $t0, $0, end #check for end of string (null terminator)
+	addiu $a2, $a2, -1 #decrement the number of characters to copy.
+	addiu $a1, $a1, 1 #move to the next character in the source string
+	addiu $a0, $a0, 1#move to the next character in the destination array.
+	j strncpy_loop
+end:
 	jr $ra
 
 #------------------------------------------------------------------------------
