@@ -51,17 +51,19 @@ end:
 #------------------------------------------------------------------------------
 strncpy:
 	# YOUR CODE HERE
-	beq $a1, $0, end #if an empty string is passed in.
 	addu $v0, $a0, 0 #load the address of the destination array into the return value.
+	beq $a1, $0, end #if an empty string is passed in.
+	beq $a2, $0, end #if number of char to copy == 0.
 strncpy_loop:
+	beq $a2, $0, strncpy_end
 	lb $t0, 0($a1) #load the current character from the source string.
 	sb $t0 0($a0) #store the current character into the destination array
-	beq $t0, $0, end #check for end of string (null terminator)
+	beq $t0, $0, strncpy_end #check for end of string (null terminator)
 	addiu $a2, $a2, -1 #decrement the number of characters to copy.
 	addiu $a1, $a1, 1 #move to the next character in the source string
 	addiu $a0, $a0, 1#move to the next character in the destination array.
 	j strncpy_loop
-end:
+strncpy_end:
 	jr $ra
 
 #------------------------------------------------------------------------------
@@ -78,6 +80,20 @@ end:
 #------------------------------------------------------------------------------
 copy_of_str:
 	# YOUR CODE HERE
+	addiu $sp, $sp, -12 #create space on stack
+	sw $ra, 0($sp) # save the return address on the stack
+	sw $a0, 4($sp) # save the input string onto the stack
+	jal strlen # $v0 = length of string
+	addiu $a0, $v0, 0 # $a0 = the number of bytes to allocate (argument for syscall)
+	sw $v0, 8($sp) # save the length of the string onto the stack
+	li $v0, 9 # syscall 9 is the memory allocation service
+	syscall # $v0 = return address of the allocated memory
+	addiu $a0, $v0, 0 # $a0 = pointer to destination array
+	lw $a1, 4($sp) # $a1 = the input string
+	lw $a2, 8($sp) # $a2 = length of the string
+	jal strncpy
+	lw $ra, 0($sp)
+	addiu $sp, $sp, 12 #move stack back up
 	jr $ra
 
 ###############################################################################

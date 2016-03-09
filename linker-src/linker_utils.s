@@ -1,7 +1,7 @@
 # CS 61C Spring 2016 Project 2-2 
 # linker_utils.s
 
-#=
+#
 #==============================================================================
 #                             Project 2-2 Part 3b
 #                             Linker Utils README
@@ -47,6 +47,16 @@ relocLabel: .asciiz ".relocation"
 #------------------------------------------------------------------------------
 inst_needs_relocation:
 	# YOUR CODE HERE
+	# the only instructions that need relocation are j, jal (do we need to check lui, ori?)
+	srl $a0, $a0, 26 
+	li $t0, 2
+	beq $a0, $t0, one
+	li $t0, 3
+	beq $a0, $t0, one
+	li $v0, 0
+	jr $ra
+one:
+	li $v0, 1
 	jr $ra
 	
 #------------------------------------------------------------------------------
@@ -69,7 +79,63 @@ inst_needs_relocation:
 #------------------------------------------------------------------------------
 relocate_inst:
 	# YOUR CODE HERE
-	jr $ra
+	# check for errors
+	# first, load arguments onto the stack.
+	addi $sp, $sp, -20 #Begin relocate_inst
+	sw $a0, 0($sp) #instruction
+	sw $a1, 4($sp) #byte offset in curr file
+	sw $a2, 8($sp) #sym tbl
+	sw $a3, 12($sp) #rel tbl
+	sw $ra, 16($sp)
+	# check if the address is in the relocation table.
+	#use byte offset to get name from reloc table. then use the name to get the address from the symbol table.
+	lw $a0, 12($sp) # $a0 = pointer to the reltbl
+	lw $a1, 4($sp) # $a1 = addr to look up. (each file has its own reltbl so you just look up the byte offset in the curr file.)
+	jal symbol_for_addr
+	beq $v0, $0, error # returns null if addr not found
+	#check if the name is in the symbol table
+	lw $a0, 8($sp) #sym tbl
+	#li $t0, 1023 # in binary 0b0000001111111111
+	#sll $t0, $t0, 16 # 0b000000111111111100000000000000000
+	#addi $t0, $t0, 65535 # $t0 = 0b00000011111111111111111111111111111
+	# $t0 = a mask to "and" with the instruction. this will extract the 26 least significant bits
+	#lw $t1, 0($sp) # $t1 = the instruction
+	#and $a1, $t0, $t1 # $a1 = the name (the 26 least significant bits)
+	addi $a1, $v0, 0 #the name from the relocation table.
+	jal addr_for_symbol
+	beq $v0, -1, error
+	# assume the address in the sym tbl at this point is the correct addr
+	# the name is the 26 bits (immediate) in the instruction. look that up in the symbol tbl and concatenate it on the instruction and return.
+
+	
+
+	#concatenate the address onto the op code
+	srl $v0, $v0, 2 #we just need to isolate 26 most useful bits: drop the lower 2 bits by shifting over 2 and then mask to isolate the 26 bits
+	li $t0, 1023 # in binary 0b0000001111111111
+	sll $t0, $t0, 16 # 0b000000111111111100000000000000000
+	addi $t0, $t0, 65535 # $t0 = 0b00000011111111111111111111111111111 mask the 26 least significant bits.
+	and $v0, $t0, $v0 #and the address with the mask to isolate 26 least significant bits.
+
+	 #extract the opcode from the instruction
+	lw $t0, 0($sp) # the instruction
+	li $t1, 64512 # in binary 1111110000000000
+	sll $t1, $t1, 16 # a mask: 0b1111110000000000000000000000000
+	and $t1, $t0, $t1 # $t1 = the op code
+
+	add $v0, $t1, $v0 # add the op code ($t1) to the address ($v0)
+
+relocate_inst_end:
+	#clear the stack
+	lw $a0, 0($sp) #instruction
+	lw $a1, 4($sp) #byte offset in curr file
+	lw $a2, 8($sp) #sym tbl
+	lw $a3, 12($sp) #rel tbl
+	lw $ra, 16($sp)
+	addi $sp, $sp, 20
+	jr $ra #End relocate_inst
+error:
+	li $v0 -1
+	j relocate_inst_end
 
 ###############################################################################
 #                 DO NOT MODIFY ANYTHING BELOW THIS POINT                       

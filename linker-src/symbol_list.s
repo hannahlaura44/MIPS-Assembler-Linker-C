@@ -49,8 +49,35 @@
 #------------------------------------------------------------------------------
 addr_for_symbol:
 	# YOUR CODE HERE
-	jr $ra
-	
+	addi $sp, $sp, -16 # Begin addr_for_symbol
+	sw $s1, 0($sp)
+	sw $ra, 4($sp)
+	sw $a0, 8($sp)
+	sw $a1, 12($sp)
+	move $s1, $a0 # save the pointer to the node	
+addr_for_symbol_loop:
+	beq $s1, $0, symb_not_found	# Empty list or end of list
+	lw $a0, 4($s1) #load the name
+	lw $a1, 12($sp)
+	jal streq
+	beq $v0, $0, symb_found
+	lw $s1, 8($s1) #move to the next node.
+	j addr_for_symbol_loop
+symb_found:
+	lw $v0, 0($s1) #load the addresses into $v0
+	j addr_for_symbol_end
+symb_not_found:
+	li $v0, -1
+	j addr_for_symbol_end
+addr_for_symbol_end:
+	lw $s1, 0($sp)
+	lw $ra 4($sp)
+	lw $a0, 8($sp)
+	lw $a1, 12($sp)
+	addi $sp, $sp, 16
+	jr $ra # End addr_for_symbol
+
+
 ###############################################################################
 #                 DO NOT MODIFY ANYTHING BELOW THIS POINT                       
 ###############################################################################
